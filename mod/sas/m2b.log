@@ -1,0 +1,147 @@
+1                                                          The SAS System                               23:29 Monday, March 11, 2024
+
+NOTE: Copyright (c) 2016 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M6) 
+      Licensed to RHO INCORPORATED NODE 1-4, Site 70170299.
+NOTE: This session is executing on the X64_SRV19  platform.
+
+
+
+NOTE: Analytical products:
+      
+      SAS/STAT 15.1
+      SAS/IML 15.1
+
+NOTE: Additional host information:
+
+ X64_SRV19 WIN 10.0.17763  Server
+
+NOTE: SAS initialization used:
+      real time           0.15 seconds
+      cpu time            0.18 seconds
+      
+NOTE: Libref SASDATA successfully assigned from logical server.
+NOTE: Libref STPSAMP successfully assigned from logical server.
+NOTE: Libref SASTST94 successfully assigned from logical server.
+NOTE: Libref SASTST94 refers to the same physical library as SASHELP.
+
+NOTE: AUTOEXEC processing beginning; file is \\drive_i\SAS94GridConfig\Lev1\SASAppPGRD94\appserver_autoexec.sas.
+
+
+NOTE: AUTOEXEC processing completed.
+
+1          
+2          proc import datafile='H:\trigat\dat\dat_twisk_l.csv' out=dat_twisk_l replace;
+2        !                                                                               run;
+
+NOTE: Unable to open parameter catalog: SASUSER.PARMS.PARMS.SLIST in update mode. Temporary parameter values will be saved to 
+WORK.PARMS.PARMS.SLIST.
+3           /**********************************************************************
+4           *   PRODUCT:   SAS
+5           *   VERSION:   9.4
+6           *   CREATOR:   External File Interface
+7           *   DATE:      11MAR24
+8           *   DESC:      Generated SAS Datastep Code
+9           *   TEMPLATE SOURCE:  (None Specified.)
+10          ***********************************************************************/
+11             data WORK.DAT_TWISK_L    ;
+12             %let _EFIERR_ = 0; /* set the ERROR detection macro variable */
+13             infile 'H:\trigat\dat\dat_twisk_l.csv' delimiter = ',' MISSOVER DSD lrecl=32767 firstobs=2 ;
+14                informat USUBJID $7. ;
+15                informat TRT01PN best32. ;
+16                informat TRT01P $3. ;
+17                informat AVISIT $7. ;
+18                informat AVAL best32. ;
+19                informat AVISITN best32. ;
+20                informat BASE best32. ;
+21                informat CHG best32. ;
+22                informat ABLFL $1. ;
+23                format USUBJID $7. ;
+24                format TRT01PN best12. ;
+2                                                          The SAS System                               23:29 Monday, March 11, 2024
+
+25                format TRT01P $3. ;
+26                format AVISIT $7. ;
+27                format AVAL best12. ;
+28                format AVISITN best12. ;
+29                format BASE best12. ;
+30                format CHG best12. ;
+31                format ABLFL $1. ;
+32             input
+33                         USUBJID  $
+34                         TRT01PN
+35                         TRT01P  $
+36                         AVISIT  $
+37                         AVAL
+38                         AVISITN
+39                         BASE
+40                         CHG
+41                         ABLFL  $
+42             ;
+43             if _ERROR_ then call symputx('_EFIERR_',1);  /* set ERROR detection macro variable */
+44             run;
+
+NOTE: The infile 'H:\trigat\dat\dat_twisk_l.csv' is:
+      Filename=H:\trigat\dat\dat_twisk_l.csv,
+      RECFM=V,LRECL=32767,File Size (bytes)=16602,
+      Last Modified=11Mar2024:17:26:01,
+      Create Time=11Mar2024:14:45:08
+
+NOTE: 456 records were read from the infile 'H:\trigat\dat\dat_twisk_l.csv'.
+      The minimum record length was 27.
+      The maximum record length was 37.
+NOTE: The data set WORK.DAT_TWISK_L has 456 observations and 9 variables.
+NOTE: Compressing data set WORK.DAT_TWISK_L increased size by 100.00 percent. 
+      Compressed is 2 pages; un-compressed would require 1 pages.
+NOTE: DATA statement used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+456 rows created in WORK.DAT_TWISK_L from H:\trigat\dat\dat_twisk_l.csv.
+  
+  
+  
+NOTE: WORK.DAT_TWISK_L data set was successfully created.
+NOTE: The data set WORK.DAT_TWISK_L has 456 observations and 9 variables.
+NOTE: PROCEDURE IMPORT used (Total process time):
+      real time           0.14 seconds
+      cpu time            0.11 seconds
+      
+
+45         
+46         ods html file='H:\trigat\mod\sas\m2b.html' style=HTMLEncore;
+NOTE: Writing HTML Body file: H:\trigat\mod\sas\m2b.html
+47         
+48         proc glimmix data=dat_twisk_l noclprint = 10;
+49          class USUBJID AVISIT (ref = first) TRT01P (ref = first);
+50          model AVAL =  TRT01P AVISIT AVISIT*TRT01P  / solution ddfm=satterthwaite;
+51          random _residual_ / subject=USUBJID type=un;
+52          lsmeans TRT01P*AVISIT / slicediff=AVISIT diff cl;
+3                                                          The SAS System                               23:29 Monday, March 11, 2024
+
+53         run;
+
+
+
+WARNING: Class levels for USUBJID are not printed because of excessive size.
+NOTE: Some observations are not used in the analysis because of: missing response values (n=68).
+WARNING: The R matrix depends on observation order within subjects. Omitting observations from the analysis because of missing 
+         values can affect this matrix. Consider using a classification effect in the RANDOM _RESIDUAL_ statement to determine 
+         ordering in the R matrix.
+NOTE: Convergence criterion (GCONV=1E-8) satisfied.
+NOTE: The PROCEDURE GLIMMIX printed pages 1-3.
+NOTE: PROCEDURE GLIMMIX used (Total process time):
+      real time           0.15 seconds
+      cpu time            0.14 seconds
+      
+
+54         
+55         ods html close;
+56         
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           0.68 seconds
+      cpu time            0.59 seconds
+      

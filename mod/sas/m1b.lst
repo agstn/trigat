@@ -1,0 +1,159 @@
+                                                           The SAS System                           23:28 Monday, March 11, 2024   1
+
+                                                       The GLIMMIX Procedure
+
+                                                         Model Information
+
+                                    Data Set                      WORK.DAT_TWISK_L             
+                                    Response Variable             AVAL                         
+                                    Response Distribution         Gaussian                     
+                                    Link Function                 Identity                     
+                                    Variance Function             Default                      
+                                    Variance Matrix Blocked By    USUBJID                      
+                                    Estimation Technique          Restricted Maximum Likelihood
+                                    Degrees of Freedom Method     Satterthwaite                
+
+
+                                                      Class Level Information
+ 
+                                               Class      Levels    Values
+
+                                               USUBJID       139    not printed     
+                                               AVISIT          2    Week 24 Week 12 
+                                               TRT01P          2    TRT CNT         
+
+
+                                              Number of Observations Read         304
+                                              Number of Observations Used         249
+
+
+                                                             Dimensions
+
+                                                 R-side Cov. Parameters           3
+                                                 Columns in X                    10
+                                                 Columns in Z per Subject         0
+                                                 Subjects (Blocks in V)         139
+                                                 Max Obs per Subject              2
+
+
+                                                     Optimization Information
+
+                                          Optimization Technique        Dual Quasi-Newton
+                                          Parameters in Optimization    3                
+                                          Lower Boundaries              2                
+                                          Upper Boundaries              0                
+                                          Fixed Effects                 Profiled         
+                                          Starting From                 Data             
+
+
+                                                          Iteration History
+ 
+                                                                     Objective                         Max
+                          Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+                                  0           0              4    1849.0363836       .            0.145027
+                                  1           0              4    1848.6426531      0.39373045    0.034812
+                                  2           0              4    1848.5969845      0.04566865    0.026056
+                                  3           0              2    1848.5792417      0.01774272    0.010147
+                                  4           0              2    1848.5754782      0.00376359    0.003077
+                                  5           0              4    1848.5750289      0.00044929    0.001009
+                                                           The SAS System                           23:28 Monday, March 11, 2024   2
+
+                                                       The GLIMMIX Procedure
+
+                                                          Iteration History
+ 
+                                                                     Objective                         Max
+                          Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+                                  6           0              3    1848.5749743      0.00005457    0.000023
+                                  7           0              3    1848.5749743      0.00000002    3.821E-7
+
+                                           Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+                                                           Fit Statistics
+
+                                                -2 Res Log Likelihood        1848.57
+                                                AIC  (smaller is better)     1854.57
+                                                AICC (smaller is better)     1854.67
+                                                BIC  (smaller is better)     1863.38
+                                                CAIC (smaller is better)     1866.38
+                                                HQIC (smaller is better)     1858.15
+                                                Generalized Chi-Square        244.00
+                                                Gener. Chi-Square / DF          1.00
+
+
+                                                   Covariance Parameter Estimates
+ 
+                                             Cov                               Standard
+                                             Parm       Subject    Estimate       Error
+
+                                             UN(1,1)    USUBJID      112.92     14.1832
+                                             UN(2,1)    USUBJID     45.4508     11.7012
+                                             UN(2,2)    USUBJID      110.02     14.7561
+
+
+                                                    Solutions for Fixed Effects
+ 
+                                                                       Standard
+                     Effect           AVISIT     TRT01P    Estimate       Error       DF    t Value    Pr > |t|
+
+                     Intercept                              50.0285      6.9767    124.7       7.17      <.0001
+                     TRT01P                      TRT        -4.5803      1.8814      128      -2.43      0.0163
+                     TRT01P                      CNT              0           .        .        .         .    
+                     BASE                                    0.6123     0.05245    122.2      11.68      <.0001
+                     AVISIT           Week 24               -2.8715      1.4597    115.4      -1.97      0.0516
+                     AVISIT           Week 12                     0           .        .        .         .    
+                     AVISIT*TRT01P    Week 24    TRT         1.9000      2.0797    114.3       0.91      0.3629
+                     AVISIT*TRT01P    Week 24    CNT              0           .        .        .         .    
+                     AVISIT*TRT01P    Week 12    TRT              0           .        .        .         .    
+                     AVISIT*TRT01P    Week 12    CNT              0           .        .        .         .    
+
+
+                                                           The SAS System                           23:28 Monday, March 11, 2024   3
+
+                                                       The GLIMMIX Procedure
+
+                                                  Type III Tests of Fixed Effects
+ 
+                                                          Num      Den
+                                        Effect             DF       DF    F Value    Pr > F
+
+                                        TRT01P              1    117.1       5.19    0.0246
+                                        BASE                1    122.2     136.31    <.0001
+                                        AVISIT              1    114.3       3.41    0.0672
+                                        AVISIT*TRT01P       1    114.3       0.83    0.3629
+
+
+                                                 AVISIT*TRT01P Least Squares Means
+ 
+                                             Standard
+            AVISIT     TRT01P    Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper
+
+            Week 24    TRT         123.02      1.3640    114.2      90.19      <.0001      0.05      120.32      125.72
+            Week 24    CNT         125.70      1.3474    115.4      93.29      <.0001      0.05      123.03      128.37
+            Week 12    TRT         123.99      1.3443    127.3      92.23      <.0001      0.05      121.33      126.65
+            Week 12    CNT         128.57      1.3044    127.4      98.56      <.0001      0.05      125.99      131.15
+
+
+                                         Differences of AVISIT*TRT01P Least Squares Means
+ 
+                                                        Standard
+ AVISIT     TRT01P    _AVISIT    _TRT01P    Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper
+
+ Week 24    TRT       Week 24    CNT         -2.6803      1.9248    115.3      -1.39      0.1664      0.05     -6.4928      1.1322
+ Week 24    TRT       Week 12    TRT         -0.9715      1.4814    113.2      -0.66      0.5133      0.05     -3.9064      1.9633
+ Week 24    TRT       Week 12    CNT         -5.5518      1.8957    206.3      -2.93      0.0038      0.05     -9.2892     -1.8144
+ Week 24    CNT       Week 12    TRT          1.7088      1.9107    209.4       0.89      0.3722      0.05     -2.0580      5.4755
+ Week 24    CNT       Week 12    CNT         -2.8715      1.4597    115.4      -1.97      0.0516      0.05     -5.7627     0.01965
+ Week 12    TRT       Week 12    CNT         -4.5803      1.8814      128      -2.43      0.0163      0.05     -8.3030     -0.8576
+
+
+                             Simple Effect Comparisons of AVISIT*TRT01P Least Squares Means By AVISIT
+ 
+   Simple Effect                                      Standard
+   Level             TRT01P    _TRT01P    Estimate       Error       DF    t Value    Pr > |t|     Alpha       Lower       Upper
+
+   AVISIT Week 24    TRT       CNT         -2.6803      1.9248    115.3      -1.39      0.1664      0.05     -6.4928      1.1322
+   AVISIT Week 12    TRT       CNT         -4.5803      1.8814      128      -2.43      0.0163      0.05     -8.3030     -0.8576

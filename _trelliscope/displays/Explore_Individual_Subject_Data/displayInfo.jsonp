@@ -1,0 +1,145 @@
+__loadDisplayInfo__56f5c992({
+  "name": "Explore Individual Subject Data",
+  "description": "Effectiveness of a long-term homocysteine-lowering treatment \n      with folic acid plus pyridoxine in reducing systolic blood",
+  "tags": [],
+  "keycols": ["USUBJID"],
+  "metas": [
+    {
+      "levels": ["S-00001", "S-00002", "S-00003", "S-00004", "S-00005", "S-00006", "S-00007", "S-00008", "S-00009", "S-00010", "S-00011", "S-00012", "S-00013", "S-00014", "S-00015", "S-00016", "S-00017", "S-00018", "S-00019", "S-00020", "S-00021", "S-00022", "S-00023", "S-00024", "S-00025", "S-00026", "S-00027", "S-00028", "S-00029", "S-00030", "S-00031", "S-00032", "S-00033", "S-00034", "S-00035", "S-00036", "S-00037", "S-00038", "S-00039", "S-00040", "S-00041", "S-00042", "S-00043", "S-00044", "S-00045", "S-00046", "S-00047", "S-00048", "S-00049", "S-00050", "S-00051", "S-00052", "S-00053", "S-00054", "S-00055", "S-00056", "S-00057", "S-00058", "S-00059", "S-00060", "S-00061", "S-00062", "S-00063", "S-00064", "S-00065", "S-00066", "S-00067", "S-00068", "S-00069", "S-00070", "S-00071", "S-00072", "S-00073", "S-00074", "S-00075", "S-00076", "S-00077", "S-00078", "S-00079", "S-00080", "S-00081", "S-00082", "S-00083", "S-00084", "S-00085", "S-00086", "S-00087", "S-00088", "S-00089", "S-00090", "S-00091", "S-00092", "S-00093", "S-00094", "S-00095", "S-00096", "S-00097", "S-00098", "S-00099", "S-00100", "S-00101", "S-00102", "S-00103", "S-00104", "S-00105", "S-00106", "S-00107", "S-00108", "S-00109", "S-00110", "S-00111", "S-00112", "S-00113", "S-00114", "S-00115", "S-00116", "S-00117", "S-00118", "S-00119", "S-00120", "S-00121", "S-00122", "S-00123", "S-00124", "S-00125", "S-00126", "S-00127", "S-00128", "S-00129", "S-00130", "S-00131", "S-00132", "S-00133", "S-00134", "S-00135", "S-00136", "S-00137", "S-00138", "S-00139", "S-00140", "S-00141", "S-00142", "S-00143", "S-00144", "S-00145", "S-00146", "S-00147", "S-00148", "S-00149", "S-00150", "S-00151", "S-00152"],
+      "maxnchar": 7,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["info"],
+      "label": "USUBJID",
+      "type": "factor",
+      "varname": "USUBJID"
+    },
+    {
+      "levels": ["CNT", "TRT"],
+      "maxnchar": 3,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["info"],
+      "label": "TRT01P",
+      "type": "factor",
+      "varname": "TRT01P"
+    },
+    {
+      "log": false,
+      "locale": true,
+      "digits": 1,
+      "maxnchar": 8,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["stats"],
+      "label": "Mean SBP",
+      "type": "number",
+      "varname": "mean_AVAL"
+    },
+    {
+      "log": true,
+      "locale": true,
+      "digits": 1,
+      "maxnchar": 10,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["stats"],
+      "label": "sd_AVAL",
+      "type": "number",
+      "varname": "sd_AVAL"
+    },
+    {
+      "log": false,
+      "locale": true,
+      "digits": 0,
+      "maxnchar": 3,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["stats"],
+      "label": "max_AVAL",
+      "type": "number",
+      "varname": "max_AVAL"
+    },
+    {
+      "log": false,
+      "locale": true,
+      "digits": 1,
+      "maxnchar": 11,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["stats"],
+      "label": "mean_CHG",
+      "type": "number",
+      "varname": "mean_CHG"
+    },
+    {
+      "log": true,
+      "locale": true,
+      "digits": 1,
+      "maxnchar": 10,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["stats"],
+      "label": "sd_CHG",
+      "type": "number",
+      "varname": "sd_CHG"
+    },
+    {
+      "log": false,
+      "locale": true,
+      "digits": 0,
+      "maxnchar": 2,
+      "sortable": true,
+      "filterable": true,
+      "tags": ["stats"],
+      "label": "max_CHG",
+      "type": "number",
+      "varname": "max_CHG"
+    },
+    {
+      "source": {
+        "isLocal": true,
+        "type": "file"
+      },
+      "aspect": 1.5,
+      "paneltype": "img",
+      "maxnchar": 0,
+      "sortable": false,
+      "filterable": false,
+      "tags": [],
+      "label": "panel",
+      "type": "panel",
+      "varname": "panel"
+    }
+  ],
+  "state": {
+    "layout": {
+      "viewtype": "grid",
+      "sidebarActive": false,
+      "page": 1,
+      "ncol": 3,
+      "type": "layout"
+    },
+    "labels": {
+      "varnames": ["USUBJID", "TRT01P"],
+      "type": "labels"
+    },
+    "sort": [
+      {
+        "type": "sort",
+        "varname": "sd_AVAL",
+        "dir": "desc",
+        "metatype": "number"
+      }
+    ],
+    "filter": [],
+    "filterView": []
+  },
+  "views": [],
+  "inputs": null,
+  "primarypanel": "panel",
+  "thumbnailurl": "panels/panel/S_00002_TRT.png",
+  "infoOnLoad": false,
+  "hasCustomInfo": false,
+  "order": 0
+})

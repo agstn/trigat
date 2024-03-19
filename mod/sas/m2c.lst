@@ -1,0 +1,119 @@
+                                                           The SAS System                           23:29 Monday, March 11, 2024   1
+
+                                                       The GLIMMIX Procedure
+
+                                                         Model Information
+
+                                    Data Set                      WORK.DAT_TWISK_L             
+                                    Response Variable             AVAL                         
+                                    Response Distribution         Gaussian                     
+                                    Link Function                 Identity                     
+                                    Variance Function             Default                      
+                                    Variance Matrix Blocked By    USUBJID                      
+                                    Estimation Technique          Restricted Maximum Likelihood
+                                    Degrees of Freedom Method     Satterthwaite                
+
+
+                                                      Class Level Information
+ 
+                                                  Class      Levels    Values
+
+                                                  USUBJID       152    not printed
+                                                  TRT01P          2    TRT CNT    
+
+
+                                              Number of Observations Read         456
+                                              Number of Observations Used         388
+
+
+                                                             Dimensions
+
+                                                 R-side Cov. Parameters           6
+                                                 Columns in X                     4
+                                                 Columns in Z per Subject         0
+                                                 Subjects (Blocks in V)         152
+                                                 Max Obs per Subject              3
+
+
+                                                     Optimization Information
+
+                                          Optimization Technique        Dual Quasi-Newton
+                                          Parameters in Optimization    6                
+                                          Lower Boundaries              3                
+                                          Upper Boundaries              0                
+                                          Fixed Effects                 Profiled         
+                                          Starting From                 Data             
+
+
+                                                          Iteration History
+ 
+                                                                     Objective                         Max
+                          Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+                                  0           0              4    3003.1669695       .            0.087614
+                                  1           0              4    3002.9445316      0.22243781    0.019441
+                                  2           0              2    3002.9354386      0.00909303    0.016513
+                                  3           0              2    3002.9252256      0.01021301    0.006286
+                                  4           0              2    3002.9185193      0.00670628    0.003973
+                                  5           0              2    3002.9152934      0.00322588    0.006517
+                                  6           0              3    3002.9139626      0.00133079    0.003541
+                                                           The SAS System                           23:29 Monday, March 11, 2024   2
+
+                                                       The GLIMMIX Procedure
+
+                                                          Iteration History
+ 
+                                                                     Objective                         Max
+                          Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+                                  7           0              4     3002.910111      0.00385167    0.005584
+                                  8           0              3    3002.9076548      0.00245616    0.000946
+                                  9           0              3    3002.9075818      0.00007298    0.000499
+                                 10           0              3    3002.9075461      0.00003570    0.000139
+
+                                           Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+                                                           Fit Statistics
+
+                                                -2 Res Log Likelihood        3002.91
+                                                AIC  (smaller is better)     3014.91
+                                                AICC (smaller is better)     3015.13
+                                                BIC  (smaller is better)     3033.05
+                                                CAIC (smaller is better)     3039.05
+                                                HQIC (smaller is better)     3022.28
+                                                Generalized Chi-Square        384.98
+                                                Gener. Chi-Square / DF          1.00
+
+
+                                                   Covariance Parameter Estimates
+ 
+                                             Cov                               Standard
+                                             Parm       Subject    Estimate       Error
+
+                                             UN(1,1)    USUBJID      236.55     28.4856
+                                             UN(2,1)    USUBJID      155.65     23.7018
+                                             UN(2,2)    USUBJID      214.77     26.7641
+                                             UN(3,1)    USUBJID      132.23     22.1585
+                                             UN(3,2)    USUBJID      131.95     21.4027
+                                             UN(3,3)    USUBJID      183.55     23.8101
+
+
+                                                    Solutions for Fixed Effects
+ 
+                                                                 Standard
+                          Effect           TRT01P    Estimate       Error       DF    t Value    Pr > |t|
+
+                          Intercept                    128.34      1.2946    137.7      99.14      <.0001
+                          ABLFLN                      -1.0920      1.2064      140      -0.91      0.3669
+                          ABLFLN*TRT01P    TRT        -3.6981      1.5697    118.1      -2.36      0.0201
+                          ABLFLN*TRT01P    CNT              0           .        .        .         .    
+
+
+                                                  Type III Tests of Fixed Effects
+ 
+                                                          Num      Den
+                                        Effect             DF       DF    F Value    Pr > F
+
+                                        ABLFLN              1    123.2       9.94    0.0020
+                                        ABLFLN*TRT01P       1    118.1       5.55    0.0201

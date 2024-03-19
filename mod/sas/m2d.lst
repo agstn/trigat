@@ -1,0 +1,128 @@
+                                                           The SAS System                           23:29 Monday, March 11, 2024   1
+
+                                                       The GLIMMIX Procedure
+
+                                                         Model Information
+
+                                    Data Set                      WORK.DAT_TWISK_L             
+                                    Response Variable             AVAL                         
+                                    Response Distribution         Gaussian                     
+                                    Link Function                 Identity                     
+                                    Variance Function             Default                      
+                                    Variance Matrix Blocked By    USUBJID                      
+                                    Estimation Technique          Restricted Maximum Likelihood
+                                    Degrees of Freedom Method     Satterthwaite                
+
+
+                                                      Class Level Information
+ 
+                                                  Class      Levels    Values
+
+                                                  USUBJID       152    not printed
+                                                  TRT01P          2    TRT CNT    
+
+
+                                              Number of Observations Read         456
+                                              Number of Observations Used         388
+
+
+                                                             Dimensions
+
+                                                 R-side Cov. Parameters           6
+                                                 Columns in X                     7
+                                                 Columns in Z per Subject         0
+                                                 Subjects (Blocks in V)         152
+                                                 Max Obs per Subject              3
+
+
+                                                     Optimization Information
+
+                                          Optimization Technique        Dual Quasi-Newton
+                                          Parameters in Optimization    6                
+                                          Lower Boundaries              3                
+                                          Upper Boundaries              0                
+                                          Fixed Effects                 Profiled         
+                                          Starting From                 Data             
+
+
+                                                          Iteration History
+ 
+                                                                     Objective                         Max
+                          Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+                                  0           0              4     2993.790822       .             0.07201
+                                  1           0              4    2993.6264167      0.16440530    0.023002
+                                  2           0              2    2993.6150691      0.01134757    0.024202
+                                  3           0              2    2993.5960416      0.01902752    0.009295
+                                  4           0              2    2993.5891553      0.00688629    0.002943
+                                  5           0              4    2993.5871988      0.00195652     0.00603
+                                  6           0              2    2993.5861106      0.00108820    0.006998
+                                                           The SAS System                           23:29 Monday, March 11, 2024   2
+
+                                                       The GLIMMIX Procedure
+
+                                                          Iteration History
+ 
+                                                                     Objective                         Max
+                          Iteration    Restarts    Evaluations        Function          Change    Gradient
+
+                                  7           0              4    2993.5818986      0.00421202    0.002652
+                                  8           0              3    2993.5810532      0.00084540    0.000874
+                                  9           0              3    2993.5808423      0.00021093    0.000299
+                                 10           0              3     2993.580839      0.00000326    0.000013
+
+                                           Convergence criterion (GCONV=1E-8) satisfied.          
+
+
+                                                           Fit Statistics
+
+                                                -2 Res Log Likelihood        2993.58
+                                                AIC  (smaller is better)     3005.58
+                                                AICC (smaller is better)     3005.80
+                                                BIC  (smaller is better)     3023.72
+                                                CAIC (smaller is better)     3029.72
+                                                HQIC (smaller is better)     3012.95
+                                                Generalized Chi-Square        383.00
+                                                Gener. Chi-Square / DF          1.00
+
+
+                                                   Covariance Parameter Estimates
+ 
+                                             Cov                               Standard
+                                             Parm       Subject    Estimate       Error
+
+                                             UN(1,1)    USUBJID      236.49     28.4704
+                                             UN(2,1)    USUBJID      154.82     23.5844
+                                             UN(2,2)    USUBJID      213.21     26.5026
+                                             UN(3,1)    USUBJID      132.51     22.1948
+                                             UN(3,2)    USUBJID      133.17     21.4453
+                                             UN(3,3)    USUBJID      184.01     23.8996
+
+
+                                                    Solutions for Fixed Effects
+ 
+                                                                  Standard
+                          Effect            TRT01P    Estimate       Error       DF    t Value    Pr > |t|
+
+                          Intercept                     128.65      1.3044      138      98.63      <.0001
+                          Week_12                      0.06757      1.3684    142.2       0.05      0.9607
+                          Week_24                      -2.6422      1.4576    130.4      -1.81      0.0722
+                          Week_12*TRT01P    TRT        -4.3793      1.8561      128      -2.36      0.0198
+                          Week_12*TRT01P    CNT              0           .        .        .         .    
+                          Week_24*TRT01P    TRT        -2.9029      1.9067    114.3      -1.52      0.1307
+                          Week_24*TRT01P    CNT              0           .        .        .         .    
+
+
+                                                           The SAS System                           23:29 Monday, March 11, 2024   3
+
+                                                       The GLIMMIX Procedure
+
+                                                  Type III Tests of Fixed Effects
+ 
+                                                           Num      Den
+                                        Effect              DF       DF    F Value    Pr > F
+
+                                        Week_12              1    130.6       4.23    0.0417
+                                        Week_24              1    115.1      13.54    0.0004
+                                        Week_12*TRT01P       1      128       5.57    0.0198
+                                        Week_24*TRT01P       1    114.3       2.32    0.1307

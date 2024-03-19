@@ -1,0 +1,1314 @@
+---
+title:     "Different ways to estimate treatment effects"
+subtitle:  "in longitudinal randomised controlled trials"
+author:    "**Agustin Calatroni** <br> ![AXC](pic/Agustin_2.jpg){width=12%}"
+date:      "`r format(Sys.time(), '%A %d %B, %Y')`"
+date-format: "dddd, [the] D[<sup style='font-size:65%;font-style:italic;'>th</sup>] [of] MMMM, YYYY"
+
+execute:
+   echo:    true
+   warning: false
+   message: false
+   cache:   false
+
+format:
+   revealjs:
+      # smaller: true
+      # scrollable: true
+      # c(1080,1920)/1.25
+      code-fold: true
+      code-line-numbers: false
+      code-summary: ''
+      height: 864 
+      width: 1536
+      embed-resources: true
+      controls: true
+---
+
+## [Abstract](https://www.sciencedirect.com/science/article/pii/S2451865417301849)
+
+```{=html}
+<style type="text/css">
+.main-container {
+max-width: 1536px;
+margin-left: auto;
+margin-right: auto;}
+</style>
+```
+
+::: {style="font-size: 1.25em;"}
+Regarding the analysis of longitudinal RCT data there is a debate going on whether an adjustment for the baseline value of the outcome variable should be made. When an adjustment is made, there is a lot of misunderstanding regarding the way this should be done. Therefore, the aims to:
+
+::: incremental
+-   to explain different methods used to estimate treatment effects in RCTs
+
+-   to illustrate the different methods with a real data example
+
+-   to give an advise on how to analyse RCT data
+
+:::
+
+:::
+
+## Example dataset {{< fa table >}} {.smaller .scrollable}
+
+Effectiveness of a long-term homocysteine-lowering treatment with folic acid plus pyridoxine in reducing systolic blood. 
+
+```{r}
+#| echo: false
+pacman::p_load(tidyverse, rio)
+pacman::p_load(labelled)
+pacman::p_load(mmrm, emmeans, multcomp)
+pacman::p_load(broom)
+pacman::p_load(gt, gtsummary, gtreg)
+
+pacman::p_load(ggbeeswarm)
+pacman::p_load(patchwork)
+
+emm_options(emmeans = list(infer = c(TRUE, TRUE)),
+            contrast = list(infer = c(TRUE, TRUE)),
+            summary = list(adjust = 'none'))
+
+dat_twisk_l <- import("dat/dat_twisk_l.rds") 
+dat_twisk_w <- import("dat/dat_twisk_w.rds") 
+```
+
+::: panel-tabset
+
+### Wide
+```{r}
+#| name: tbl_w_1
+#| fig.align: 'center'
+#| echo: false
+#| code-fold: true
+
+dat_twisk_w  %>% 
+   gt_preview(top_n = 2,
+              bottom_n = 2,
+              incl_rownums = FALSE) %>% 
+   sub_missing() %>% 
+   gtsave(filename = 'tbl/tbl_w_1.png', zoom = 4)
+
+knitr::include_graphics('tbl/tbl_w_1.png')
+```
+
+### Long 
+```{r}
+#| name: tbl_l_1
+#| fig.align: 'center'
+#| echo: false
+#| code-fold: true
+
+dat_twisk_l  %>% 
+   gt_preview(top_n = 6,
+              bottom_n = 6,
+              incl_rownums = FALSE) %>% 
+   sub_missing() %>% 
+   gtsave('tbl/tbl_l_1.png', zoom = 4)
+
+knitr::include_graphics('tbl/tbl_l_1.png')
+```
+:::
+
+## Tables {{< fa plus-minus >}} {.scrollable .smaller}
+
+In this 24 months , randomized, placebo-controlled trial, a baseline measurement and two follow-up measurements (after 12 and after 24 months) were performed. At each time-point systolic blood pressure was measured four times and the average value was used in the analysis.
+
+::: panel-tabset
+
+### TABLE-1
+```{r}
+#| name: tbl-1
+#| fig.align: 'center'
+#| echo: true
+#| code-fold: true
+
+add_by_n <- function(data, variable, by, tbl, ...) {
+   data %>%
+      select(all_of(c(variable, by))) %>%
+      dplyr::group_by(.data[[by]]) %>%
+      dplyr::summarise_all(~sum(!is.na(.))) %>%
+      rlang::set_names(c("by", "variable")) %>%
+      dplyr::left_join(
+         tbl$df_by %>% select(by, by_col),
+         by = "by"
+      ) %>%
+      mutate(
+         by_col = paste0("add_n_", by_col),
+         variable = style_number(variable)
+      ) %>%
+      select(-by) %>%
+      tidyr::pivot_wider(names_from = by_col, 
+                         values_from = variable)}
+
+tbl_summary(data = dat_twisk_w %>% mutate(TRT01P = fct_rev(TRT01P)),
+            by = TRT01P , 
+            include = starts_with('SYS_'),
+            digit = list(everything() ~ c(1,1)),
+            statistic = list(all_continuous() ~ "{mean} ({sd})"),
+            missing = 'no',
+            label = list( SYS_0 ~ 'Week 0 (Randomization)',
+                          SYS_1 ~ 'Week 12',
+                          SYS_2 ~ 'Week 24')) %>% 
+   add_stat( fns = everything() ~ add_by_n ) %>%
+   add_difference(test = list(all_continuous() ~ "t.test"),
+                  pvalue_fun = ~style_pvalue(.x, digits = 2),
+                  estimate_fun = list(all_continuous() ~ function(x) style_number(x, digits=1)) ) %>% 
+   bold_labels() %>% 
+   modify_column_merge(pattern = "{estimate} ({ci})") %>% 
+   modify_header(
+      label = '',
+      estimate = '**DIFF (95% CI)**',
+      all_stat_cols(FALSE) ~ "**{level}**<br>n = {n}",
+      starts_with("add_n_stat") ~ "**n**") %>% 
+   modify_table_body(
+      ~ .x %>%
+         dplyr::relocate(add_n_stat_1, .before = stat_1) %>%
+         dplyr::relocate(add_n_stat_2, .before = stat_2)
+   ) %>% 
+   modify_spanning_header(
+      c(all_stat_cols(F), starts_with("add_n_stat")) ~ "**Treatment**") %>% 
+   as_gt() %>% 
+   gtsave('tbl/tbl_1.png', zoom = 4)
+
+knitr::include_graphics('tbl/tbl_1.png')
+```
+
+### TABLE-2
+```{r}
+#| name: tbl-2
+#| fig.align: 'center'
+#| echo: true
+#| code-fold: true
+
+pacman::p_load(gtreg)
+
+tbl_reg_summary(data = dat_twisk_w %>% mutate(TRT01P = fct_rev(TRT01P)),
+                by = TRT01P , 
+                include = starts_with('SYS_'),
+                label = list( SYS_0 ~ 'Week 0 (Randomization)',
+                              SYS_1 ~ 'Week 12',
+                              SYS_2 ~ 'Week 24'),
+                digits = everything() ~ c(0, 1, 1, 0, 0, 0, 0, 0) ) %>% 
+   add_overall() %>% 
+   bold_labels() %>% 
+   modify_header(
+      label = '',
+      all_stat_cols(TRUE) ~ "**{level}**" ) %>% 
+   modify_spanning_header(
+      c(all_stat_cols(F), starts_with("add_n_stat")) ~ "**Treatment**")%>% 
+   as_gt() %>% 
+   gtsave('tbl/tbl_2.png', zoom = 3)
+
+knitr::include_graphics('tbl/tbl_2.png')
+```
+:::
+
+## Figures {{< fa chart-line >}} {.smaller}
+
+::: panel-tabset
+
+### DOTPLOT
+```{r}
+#| name: fig-dotplot
+#| out-width: "100%"
+#| out-height: "650px"
+#| fig.align: 'center'
+#| echo: true
+#| code-fold: true
+
+ggplot(data = dat_twisk_l %>% drop_na(AVAL),
+       aes(x = AVISITN, y = AVAL, color = TRT01P)) +
+   geom_quasirandom(dodge.width = 0.5, alpha = 0.5, size = 2) +
+   scale_colour_brewer(palette = "Set1",
+                       name = 'Treatment') +
+   scale_y_continuous(name = 'Systolic Blood Pressure (mmHg)',
+                      limits = c(80, 200)) +
+   scale_x_continuous(name = '',
+                      breaks = c(0, 1, 2),
+                      labels = c('Week 0\nRandomization', 'Week 12', 'Week 24')) +
+   theme_bw(base_size = 18) + 
+   theme(panel.grid.minor = element_blank(),
+         legend.position      = c(0.99, 0.99),
+         legend.justification = c('right','top'))
+```
+
+### BOXPLOT
+```{r}
+#| name: fig-boxplot
+#| cache: false
+#| out-width: "100%"
+#| out-height: "650px"
+#| fig.align: 'center'
+#| echo: true
+#| code-fold: true
+
+m <- mmrm(AVAL ~ TRT01P * AVISIT + us(AVISIT | USUBJID), data = dat_twisk_l)
+
+e <- emmeans(m, revpairwise ~ TRT01P | AVISIT, adjust = 'none') %>% 
+   as.data.frame() %>% 
+   filter(contrast != '.') %>% 
+   data.frame()
+
+f_a <- ggplot(data = dat_twisk_l %>% drop_na(AVAL),
+              aes(x = AVISITN, y = AVAL, color = TRT01P)) +
+   geom_quasirandom(dodge.width=1, alpha = 0.2, size = 2.5, show.legend = FALSE) +
+   geom_boxplot(aes(group = interaction(AVISITN, TRT01P)),
+                fill = 'transparent',
+                outlier.shape = NA,
+                show.legend = FALSE) +
+   scale_colour_brewer(palette = "Set1",
+                       name = 'Treatment') +
+   stat_summary(fun = mean,
+                geom = "point",
+                size = 3,
+                position = position_dodge(width = 1)) +
+   scale_y_continuous(name = 'Systolic Blood Pressure (mmHg)',
+                      limits = c(80, 200)) +
+   scale_x_continuous(name = NULL,
+                      breaks = c(0, 1, 2),
+                      labels = c('Week 0 (R)', 'Week 12', 'Week 24')) +
+   theme_bw(base_size = 14) + 
+   theme(panel.grid.minor = element_blank(),
+         legend.position      = c(0.99, 0.99),
+         legend.justification = c('right','top'))
+
+f_b <- ggplot(data = e,
+              aes(x = AVISIT, y = emmean, group = contrast)) + 
+   geom_hline(yintercept  = 0, color = 'gray50') +
+   geom_point(size = 4) +
+   geom_line(linewidth = 1) +
+   geom_linerange(aes(ymin = lower.CL,
+                      ymax = upper.CL),
+                  size = 1.5) +
+   geom_text(aes( y = -14.5,
+                  label = gtsummary::style_pvalue(p.value, prepend_p = TRUE) ) ) +
+   scale_color_discrete(name = 'Treatment') +
+   scale_y_continuous(name = 'DIFF (95% CI)',
+                      limits = c(-15, 2)) +
+   scale_x_discrete(name = '') +
+   theme_bw(base_size = 14) +
+   theme(panel.grid.minor = element_blank(),
+         axis.text.x=element_blank())
+
+f_a / f_b + plot_layout( heights = c(2, 1))
+```
+
+### LINEPLOT
+```{r}
+#| name: fig-linepolot
+#| out-width: "100%"
+#| out-height: "650px"
+#| fig.align: 'center'
+#| echo: true
+#| code-fold: true
+
+ggplot(data = dat_twisk_l %>% drop_na(AVAL),
+       aes(x = AVISIT, y = AVAL, color = TRT01P , group = USUBJID )) +
+   geom_quasirandom(dodge.width = 0.5, alpha = 0.5, size = 2.5) +
+   geom_line(alpha = 0.5,
+             position=position_quasirandom(dodge.width = 0.5)) +
+   facet_wrap(. ~ TRT01P  ) +
+   scale_colour_brewer(palette = "Set1",
+                       name = 'Treatment') +
+   scale_y_continuous(name = 'Systolic Blood Pressure (mmHg)',
+                      limits = c(80, 200)) +
+   labs(x = NULL) +
+   theme_bw(base_size = 18) + 
+   theme(panel.grid.minor = element_blank(),
+         legend.position      = c(0.99, 0.99),
+         legend.justification = c('right','top'))
+```
+:::
+
+## [trelliscope: Create and Explore Data Frames of Visualizations {{< fa clone >}}](https://trelliscope.org/){preview-link="true"} {data-menu-title="trelliscope-intro"}
+
+Trelliscope is an open source project that provides tools for data scientists to build and share interactive collections of visualizations for detailed data exploration and more.
+
+```{=html}
+<script src="https://unpkg.com/trelliscopejs-lib/dist/trelliscope.min.js"></script>
+```
+
+#  {background-iframe="_trelliscope/index.html" background-interactive="TRUE" data-menu-title="trelliscope-app"}
+
+## [Scatterplot Matrix {{< fa calculator >}}](https://cran.r-project.org/web/packages/scatterPlotMatrix/){preview-link="true"} {.smaller}
+
+```{r}
+#| name: fig-scatMatrix
+#| out-width: "100%"
+#| out-height: "650px"
+#| fig.align: 'center'
+#| echo: true
+#| code-fold: true
+
+pacman::p_load(scatterPlotMatrix)
+
+d <- dat_twisk_w[,-c(1:2)] %>%
+   relocate(TRT01P, .after = last_col()) %>% 
+   na.omit()
+
+scatterPlotMatrix(data = d,
+                  zAxisDim = 'TRT01P',
+                  categoricalCS = "Set1",
+                  slidersPosition = list(
+                     dimCount = 4,
+                     xStartingDimIndex = 2,
+                     yStartingDimIndex = 2 ),
+                  columnLabels = c('W0', 'W12', 'W24','TRT'),
+                  distribType = 1,
+                  regressionType = 2,
+                  plotProperties =  list( noCatColor= "#43665e", 
+                                          watermarkColor = "#ddd", 
+                                          point = list( alpha = 0.5, radius = 3 ),
+                                          regression = list( strokeWidth = 1 ) ),
+                  corrPlotType = "Text",
+                  width = '1000px', height = '1000px')
+```
+
+
+
+
+## [Mixed models for repeated measures (MMRM)](https://openpharma.github.io/mmrm/){preview-link="true"} 
+
+![](pic/mmrm_openpharma.png)
+
+## Method 1: Longitudinal analysis of covariance  {.smaller}
+
+::: columns
+
+::: {.column width="50%"}
+
+### (1a) Overall TRT effect
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} = \beta_0 + \beta_1X + \beta_2Y_{t0}$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m1a <- mmrm(AVAL ~ TRT01P + BASE + 
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l %>% filter(AVISITN != 0))
+e1a <- emmeans(m1a, revpairwise ~ TRT01P) 
+e1a
+```
+
+### DATA
+```{r}
+m1a$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m1a,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+where AVISITN ^= 0;
+class USUBJID AVISIT (ref = first) TRT01P (ref = first);
+model AVAL = TRT01P BASE / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans TRT01P / diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m1a.html", height = "575px")
+```
+
+:::
+
+:::
+
+::: {.column width="50%"}
+
+### (1b) Weekly TRT effect 
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} = \beta_0 + \beta_1X + \beta_2Y_{t0} + \beta_3time + \beta_4X\times time$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m1b <- mmrm(AVAL ~ TRT01P + BASE + AVISIT + AVISIT:TRT01P + 
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l %>% filter(AVISITN != 0))
+e1b <- emmeans(m1b, revpairwise ~ TRT01P | AVISIT) 
+e1b
+```
+
+### DATA
+```{r}
+m1b$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m1b,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+where AVISITN ^= 0;
+class USUBJID AVISIT (ref = first) TRT01P (ref = first);
+model AVAL = TRT01P BASE AVISIT AVISIT*TRT01P/ solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans AVISIT*TRT01P / slicediff=AVISIT diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m1b.html", height = "575px")
+```
+:::
+
+:::
+
+:::
+
+## Method 2: Repeated measures {.smaller}
+
+::: columns
+
+::: {.column width="50%"}
+
+### (2a) Overall TRT effect
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} = \beta_0 + \beta_1X + \beta_2time + \beta_3time\times X$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m2a <- mmrm(AVAL ~ TRT01P + ABLFL + ABLFL:TRT01P +
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l)
+e2a <- emmeans(m2a, revpairwise ~ TRT01P | ABLFL) 
+e2a
+```
+
+### DATA
+```{r}
+m2a$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m2a,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note() 
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+class USUBJID AVISIT (ref = first) ABLFL (ref = first) TRT01P (ref = first);
+model AVAL =  TRT01P ABLFL ABLFL*TRT01P  / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans TRT01P*ABLFL / slicediff=ABLFL diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m2a.html", height = "575px")
+```
+
+:::
+
+:::
+
+::: {.column width="50%"}
+
+### (2b) Weekly TRT effect 
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} = \beta_0 + \beta_1X + \beta_2dummy\_time_1 + \beta_3dummy\_time_2 +\\ \beta_4dumm\_time_1\times X + \beta_5dummy\_time_2 \times X$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m2b <- mmrm(AVAL ~ TRT01P + AVISIT  + AVISIT :TRT01P +
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l)
+e2b <- emmeans(m2b, revpairwise ~ TRT01P | AVISIT ) 
+e2b
+```
+
+### DATA
+```{r}
+m2b$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m2b,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note() 
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+class USUBJID AVISIT (ref = first) TRT01P (ref = first);
+model AVAL =  TRT01P AVISIT AVISIT*TRT01P  / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans TRT01P*AVISIT / slicediff=AVISIT diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m2b.html", height = "575px")
+```
+:::
+
+:::
+
+:::
+
+## Method 2: Repeated measures wo/ treatment {.smaller}
+
+::: columns
+
+::: {.column width="50%"}
+
+### (2c) Overall TRT effect
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} = \beta_0 + \beta_1time + \beta_2time\times X$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m2c <- mmrm(AVAL ~ ABLFL + ABLFL:TRT01P +
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l %>% mutate(ABLFL = as.numeric(ABLFL)-2) )
+e2cf0 <- emmeans(m2c,          ~ TRT01P | ABLFL, at = list( ABLFL = 0) ) 
+e2cf1 <- emmeans(m2c, pairwise ~ TRT01P | ABLFL, at = list( ABLFL = 1) ) 
+e2cf1
+```
+
+### DATA
+```{r}
+m2c$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m2c,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+class USUBJID TRT01P (ref = first);
+model AVAL =  ABLFLN ABLFLN*TRT01P  / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m2c.html", height = "575px")
+```
+
+:::
+
+:::
+
+::: {.column width="50%"}
+
+### (2d) Weekly TRT effect 
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} = \beta_0 + \beta_1dummytime_1 + \beta_2dummytime_2 + \\ \beta_3dummytime_1 \times X + \beta_4dummytime_2 \times X$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m2d <- mmrm(AVAL ~ I(AVISIT == "Week 12") + I(AVISIT == "Week 24") + 
+               I(AVISIT == "Week 12" & TRT01P ==  "TRT") + I(AVISIT == "Week 24" & TRT01P == "TRT") + 
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l )
+
+summary(m2d)$coefficient %>% 
+   as.data.frame() %>% 
+   rownames_to_column() %>% 
+   select(-df) %>% 
+   gt(rowname_col = "rownames") %>% 
+   fmt_number(columns = 2:4, decimals = 2) %>% 
+   fmt(columns = 5, 
+       fns = function(x) gtsummary::style_pvalue(x, digits = 2)) %>% 
+   cols_align_decimal() %>% 
+   cols_label(rowname = '')
+```
+
+### DATA
+```{r}
+m2d$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m2d,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+class USUBJID TRT01P (ref = first);
+model AVAL = Week_12 Week_24 Week_12*TRT01P Week_24*TRT01P / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m2d.html", height = "575px")
+```
+:::
+
+:::
+
+:::
+
+## Method 3: Analysis of changes (not adjusted)  {.smaller}
+
+::: columns
+
+::: {.column width="50%"}
+
+### (3a) Overall TRT effect
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} - Y_{t0} = \beta_0 + \beta_1X$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m3a <- mmrm(CHG ~ TRT01P + 
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l %>% filter(AVISITN != 0))
+e3a <- emmeans(m3a, revpairwise ~ TRT01P) 
+e3a
+```
+
+### DATA
+```{r}
+m3a$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m3a,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+where AVISITN ^= 0;
+class USUBJID TRT01P (ref = first);
+model CHG = TRT01P / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans TRT01P / diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m3a.html", height = "575px")
+```
+
+:::
+
+:::
+
+::: {.column width="50%"}
+
+### (3b) Weekly TRT effect 
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} - Y_{t0} = \beta_0 + \beta_1X + \beta_2 time + \beta_3X \times time$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m3b <- mmrm(CHG ~ TRT01P + AVISIT + TRT01P:AVISIT +
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l %>% filter(AVISITN != 0))
+e3b <- emmeans(m3b, revpairwise ~ TRT01P | AVISIT) 
+e3b
+```
+
+### DATA
+```{r}
+m3a$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m3b,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+where AVISITN ^= 0;
+class USUBJID AVISIT (ref = first) TRT01P (ref = first);
+model CHG = TRT01P AVISIT AVISIT*TRT01P / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans TRT01P*AVISIT / slicediff=AVISIT diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m3b.html", height = "575px")
+```
+:::
+
+:::
+
+:::
+
+## Method 3: Analysis of changes (adjusted)  {.smaller}
+
+::: columns
+
+::: {.column width="50%"}
+
+### (3c) Overall TRT effect
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} - Y_{t0} = \beta_0 + \beta_1X +\beta_2Y_{t0}$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m3c <- mmrm(CHG ~ TRT01P + BASE +
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l %>% filter(AVISITN != 0))
+e3c <- emmeans(m3c, revpairwise ~ TRT01P) 
+e3c
+```
+
+### DATA
+```{r}
+m3c$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m3c,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic)) %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+where AVISITN ^= 0;
+class USUBJID TRT01P (ref = first);
+model CHG = TRT01P BASE / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans TRT01P / diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m3c.html", height = "575px")
+```
+
+:::
+
+:::
+
+::: {.column width="50%"}
+
+### (3d) Weekly TRT effect 
+
+::: panel-tabset
+
+### EQ
+$$Y_{t} - Y_{t0} = \beta_0 + \beta_1X + \beta_2 Y_{t0} + \beta_3X \times time$$
+
+### MODEL {.scrollable style="font-size: 1.25em;"}
+```{r}
+m3d <- mmrm(CHG ~ TRT01P + BASE + AVISIT + TRT01P:AVISIT +
+               us(AVISIT|USUBJID),     
+            data = dat_twisk_l %>% filter(AVISITN != 0))
+e3d <- emmeans(m3d, revpairwise ~ TRT01P | AVISIT) 
+e3d
+```
+
+### DATA
+```{r}
+m3d$tmb_data$full_frame %>%
+   select(-`(weights)`) %>% 
+   gt_preview(incl_rownums = TRUE)
+```
+
+### COEFF
+```{r}
+tbl_regression(m3d,
+               intercept = TRUE,
+               pvalue_fun = function(x) style_pvalue(x, digits = 2) ) %>% 
+   modify_column_unhide(column = c(std.error, statistic))  %>% 
+   add_glance_source_note()
+```
+
+### SAS {style="font-size: 1.25em;"}
+
+<details>
+
+<summary>Code</summary>
+
+``` sas
+proc glimmix data=dat_twisk_l noclprint = 10;
+where AVISITN ^= 0;
+class USUBJID AVISIT (ref = first) TRT01P (ref = first);
+model CHG = TRT01P BASE AVISIT AVISIT*TRT01P / solution ddfm=satterthwaite;
+random _residual_ / subject=USUBJID type=un;
+lsmeans TRT01P*AVISIT / slicediff=AVISIT diff cl;
+run;
+```
+
+</details>
+
+```{r}
+#| echo: false
+knitr::include_app("mod/sas/m3d.html", height = "575px")
+```
+:::
+
+:::
+
+:::
+
+## Overall TRT Effect (Combined Results) {.scrollable .smaller}
+
+```{r}
+#| name: tbl_comb
+#| echo: false
+
+source('mod/r/m1a.r')
+source('mod/r/m1b.r')
+
+source('mod/r/m2a.r')
+source('mod/r/m2b.r')
+
+source('mod/r/m2c.r')
+source('mod/r/m2d.r')
+
+source('mod/r/m3a.r')
+source('mod/r/m3b.r')
+
+source('mod/r/m3c.r')
+source('mod/r/m3d.r')
+
+dat_twisk_all <- 
+   tribble(
+      ~table,
+      ~equation,  
+      ~method,                            
+      ~m,
+      ~e,
+      
+      'Overall',
+      "(1a)", 
+      "Longitudinal analysis of covariance",  
+      m1a,
+      m1a %>% broom::tidy(conf.int = TRUE) %>% filter(str_detect(term, "TRT01P")),
+      
+      'Overall',
+      "(2a)",                   
+      "Repeated measures analysis",   
+      m2a,
+      m2a %>% broom::tidy(conf.int = TRUE) %>% filter(str_detect(term, "TRT01P")) %>% slice(1),
+      
+      'Overall',
+      "(2c)",
+      "Repeated measures wo/ treatment",
+      m2c,
+      m2c %>%  broom::tidy(conf.int = TRUE) %>% 
+         mutate(across(c(estimate, statistic, conf.low, conf.high), ~-1*.x) ) %>% 
+         rename(conf.low = conf.high, 
+                conf.high = conf.low) %>% 
+         filter(str_detect(term, "TRT01P")) ,
+      
+      'Overall',
+      "(3a)",   
+      "Analysis of changes (not adjusted)",  
+      m3a,
+      m3a %>% broom::tidy(conf.int = TRUE) %>% filter(str_detect(term, "TRT01P")),
+      
+      'Overall',
+      "(3c)",      
+      "Analysis of changes (adjusted)",  
+      m3c,
+      m3c %>% broom::tidy(conf.int = TRUE) %>% filter(str_detect(term, "TRT01P"))
+   ) %>% 
+   rowwise() %>% 
+   mutate(model = Reduce( paste, deparse(m$formula_parts$formula) ),
+          call  = list(m$call)
+   )
+
+dat_twisk_coef <- dat_twisk_all %>% 
+   select(equation, method, e, model) %>% 
+   unnest(e)
+
+dat_twisk_coef %>%
+   select(equation, method, estimate, std.error, statistic, conf.low, conf.high, p.value, model) %>% 
+   mutate(equation = str_glue("{equation} {method}")) %>% 
+   gt(groupname_col = 'equation') %>% 
+   fmt_number(columns = c(estimate,  conf.low, conf.high), decimals = 1) %>% 
+   fmt_number(columns = c(std.error, statistic ), decimals = 2) %>% 
+   fmt(columns = p.value, 
+       fns = function(x) gtsummary::style_pvalue(x, digits = 2)) %>%
+   cols_merge(c(conf.low, conf.high), pattern = "({1}, {2})") %>% 
+   cols_align_decimal() %>% 
+   cols_hide(method) %>% 
+   cols_label(
+      estimate = 'Beta',
+      std.error = 'SE',
+      statistic = 'Statistic',
+      conf.low = '95% CI',
+      p.value = 'p-value') %>% 
+   tab_style(
+      style = list(cell_text(size = 'small')),
+      locations = cells_body(columns = model)) %>% 
+   tab_options(row_group.as_column = TRUE)
+```
+
+::: {style="font-size: 1.75em;"}
+
+::: incremental
+- (1a) overall TRT effect of -3.7 (mmHg)  
+- (2a) wo/ adjustment for baseline differences {{< fa arrow-right-long >}} {{< fa arrow-trend-up >}} overestimation  
+- (2b)  w/ adjustment for baseline differences {{< fa arrow-right-long >}} {{< fa arrow-right-arrow-left >}} similar results to (1a)  
+- (3a) wo/ adjustments for baseline difference {{< fa arrow-right-long >}} {{< fa arrow-trend-down >}} underestimation  
+- (3c)  w/ adjustment for baseline differences {{< fa arrow-right-long >}} {{< fa arrows-left-right-to-line >}} exact same results  
+:::
+
+:::
+
+## Mathematical equivalence between models {.smaller}
+
+<br>
+
+| `(1a) Longitudinal analysis of covariance`                 | `(3c) Analysis of changes (adjusted)`                       |
+|:------------------------------------------------------|:-------------------------------------------------------|
+| $$Y_{t} = \beta_0 + \beta_1X + \beta_2Y_{t0}$$        | $$Y_{t} - Y_{t0} = \beta_0 + \beta_1X +\beta_2Y_{t0}$$ |
+|                                                       | $$Y_{t} = \beta_0 + \beta_1X +\beta_2Y_{t0} + Y_{t0}$$ |
+|                                                       | $$Y_{t} = \beta_0 + \beta_1X + (1 + \beta_2) Y_{t0}$$  |
+| $$Y_{t} = 49 - 3.7X + 0.6Y_{t0}$$ | $$Y_{t} = 49 - 3.7X - 0.4Y_{t0}$$ |
+
+## [ADaM Basic Data Structure (BDS) {{< fa database >}}](https://www.cdisc.org/kb/examples/adam-basic-data-structure-bds-using-paramcd-80288192){preview-link="false" target="_blank"}
+
+{{< pdf pic/ADEFF%20Variable%20Metadata.pdf width=100% height=750 >}}
+
+## Simulation (Complete Data)
+```{r}
+#| name: sim-tbl_comp
+#| attr-source: "style='font-size: 0.85em;'"
+
+sim_1 <- import('mod/sim/sim_1.rds')
+
+sim_w <- sim_1 %>% 
+   select(-BASE, -CHG) %>% 
+   pivot_wider(names_from = c(MISS, AVISIT),
+               values_from = c(AVAL) )
+
+add_by_n <- function(data, variable, by, tbl, ...) {
+   data %>%
+      select(all_of(c(variable, by))) %>%
+      dplyr::group_by(.data[[by]]) %>%
+      dplyr::summarise_all(~sum(!is.na(.))) %>%
+      rlang::set_names(c("by", "variable")) %>%
+      dplyr::left_join(
+         tbl$df_by %>% select(by, by_col),
+         by = "by"
+      ) %>%
+      mutate(
+         by_col = paste0("add_n_", by_col),
+         variable = style_number(variable)
+      ) %>%
+      select(-by) %>%
+      tidyr::pivot_wider(names_from = by_col, 
+                         values_from = variable)
+}
+
+tbl_summary(data = sim_w %>% mutate(TRT01P = fct_rev(TRT01P)),
+            by = TRT01P , 
+            include = starts_with('COMP_'),
+            digit = list(everything() ~ c(1,1)),
+            statistic = list(all_continuous() ~ "{mean} ({sd})"),
+            missing = 'no',
+            label = list( `COMP_Week 0` ~ 'Week 0 (Randomization)',
+                          `COMP_Week 12` ~ 'Week 12',
+                          `COMP_Week 24` ~ 'Week 24')) %>% 
+   add_stat( fns = everything() ~ add_by_n ) %>%
+   add_difference(test = list(all_continuous() ~ "t.test"),
+                  pvalue_fun = ~style_pvalue(.x, digits = 2),
+                  estimate_fun = list(all_continuous() ~ function(x) style_number(x, digits=1)) ) %>% 
+   bold_labels() %>% 
+   modify_column_merge(pattern = "{estimate} ({ci})") %>% 
+   modify_header(
+      label = '',
+      estimate = '**DIFF (95% CI)**',
+      all_stat_cols(FALSE) ~ "**{level}**",
+      starts_with("add_n_stat") ~ "**n**") %>% 
+   modify_table_body(
+      ~ .x %>%
+         dplyr::relocate(add_n_stat_1, .before = stat_1) %>%
+         dplyr::relocate(add_n_stat_2, .before = stat_2)
+   ) %>% 
+   modify_spanning_header(
+      c(all_stat_cols(F), starts_with("add_n_stat")) ~ "**Treatment**") %>% 
+   as_gt() %>% 
+   gtsave('tbl/sim-tbl_comp.png', zoom = 3)
+
+knitr::include_graphics('tbl/sim-tbl_comp.png')
+```
+
+## Simulation (Missing Data)
+```{r}
+#| name: sim-tbl_miss
+#| attr-source: "style='font-size: 0.85em;'"
+
+tbl_summary(data = sim_w %>% mutate(TRT01P = fct_rev(TRT01P)),
+            by = TRT01P , 
+            include = starts_with('MISS_'),
+            digit = list(everything() ~ c(1,1)),
+            statistic = list(all_continuous() ~ "{mean} ({sd})"),
+            missing = 'no',
+            label = list( `MISS_Week 0` ~ 'Week 0 (Randomization)',
+                          `MISS_Week 12` ~ 'Week 12',
+                          `MISS_Week 24` ~ 'Week 24')) %>% 
+   add_stat( fns = everything() ~ add_by_n ) %>%
+   add_difference(test = list(all_continuous() ~ "t.test"),
+                  pvalue_fun = ~style_pvalue(.x, digits = 2),
+                  estimate_fun = list(all_continuous() ~ function(x) style_number(x, digits=1)) ) %>% 
+   bold_labels() %>% 
+   modify_column_merge(pattern = "{estimate} ({ci})") %>% 
+   modify_header(
+      label = '',
+      estimate = '**DIFF (95% CI)**',
+      all_stat_cols(FALSE) ~ "**{level}**",
+      starts_with("add_n_stat") ~ "**n**") %>% 
+   modify_table_body(
+      ~ .x %>%
+         dplyr::relocate(add_n_stat_1, .before = stat_1) %>%
+         dplyr::relocate(add_n_stat_2, .before = stat_2)
+   ) %>% 
+   modify_spanning_header(
+      c(all_stat_cols(F), starts_with("add_n_stat")) ~ "**Treatment**") %>% 
+   as_gt() %>% 
+   gtsave('tbl/sim-tbl_miss.png', zoom = 3)
+
+knitr::include_graphics('tbl/sim-tbl_miss.png')
+```
+
+## Simulation (Power Analyses)
+```{r}
+#| name: fig-simulation
+#| out-width: "100%"
+#| out-height: "650px"
+#| fig.align: 'center'
+#| attr-source: "style='font-size: 0.85em;'"
+
+pacman::p_load(ggdist)
+
+sim_l <- import('mod/sim/sim_l.rds')
+
+sim_p <- sim_l %>% 
+   group_by(model, MISS) %>% 
+   summarise(power = sum(I(statistic< -1.98)) / n() )
+
+sim_g <- sim_l %>% 
+   group_by(model, MISS) %>% 
+   summarise(statistic = mean(statistic) )
+
+sim_l %>%
+   ggplot(aes(y = model, x = statistic )) +
+   geom_vline(xintercept  = -2, color = 'gray50') +
+   stat_halfeye(adjust = 0.70, alpha = 0.50) +
+   facet_wrap(~ MISS,
+              labeller = as_labeller(c(COMP='Completed Data', MISS='MCAR (25%)')) ) +
+   scale_y_discrete(limits = rev,
+                    name = '') +
+   geom_text(data = sim_p,
+             vjust = -1.0,
+             aes(x = 0.85, label = style_percent(power, digits = 0, symbol = TRUE) ) ) +
+   geom_text(data = sim_g,
+             vjust = -1.0,
+             aes(x = statistic, label = style_number(statistic, digits = 1) ) ) +
+   theme_bw(base_size = 18) +
+   theme(panel.grid.minor = element_blank(),
+         axis.text.y = element_text(face = 'bold',size = 10))
+```
+
+
+## [Different ways to estimate treatment effects in randomised controlled trials](https://www.sciencedirect.com/science/article/pii/S2451865417301849){preview-link="true"} {{< fa file-lines >}} {.smaller}
+
+{{< pdf doc/Different%20ways%20to%20estimate%20treatment%20effects%20RCT.pdf width=100% height=700 >}}
+
+# {{< fa person-circle-question size=4x >}}  [{{< fa brands github size=2x >}}](https://github.com/agstn){preview-link="false" target="_blank"} {data-menu-title="Questions"}
+
+# Data Visualizations for Clinical Trials Reporting {{< fa chart-column >}} <br><small> Some Examples <br>Visualizations for the Special Interest Group at<br>[Statisticians in the Pharmaceutical Industry (PSI)](https://www.psiweb.org/){preview-link="true"}</small> 
+
+## [Quality of life outcomes in a cancer trial](https://agstn.github.io/qlq-c30/qlq-c30_flexdashboard.html){preview-link="true"}
+
+![](pic/cancer_trial.png){fig-align="center"}
+
+## [Patient Profiler (Proof of Concept)](https://agstn.github.io/PatientProfiler/PatientProfiler.html){preview-link="true"}
+
+![](pic/Patient_Profiler.png){fig-align="center"}
+
+## [Sensitivity Analyses of HiSCR definition on the results](https://rpubs.com/acalatroni/899939){preview-link="false" target="_blank"}
+
+![](pic/HiSCR_response.png){fig-align="center"}
+
+## [Relative Importance of Regressors in Linear Models](https://github.com/agstn/WW/tree/main/2022-08-10){preview-link="false" target="_blank"}
+
+![](pic/ed5d_relaimpo.png){fig-align="center"}
+
+## [Continuous Glucose Monitoring (CGM) Visualization](https://agstn.github.io/CGM/){preview-link="true"}
+
+![](pic/CGM_Visualization.png){fig-align="center"}
+
+## [Prediction of Residual Tumor model w/ ModelStudio](https://rpubs.com/acalatroni/709891){preview-link="false" target="_blank"}
+
+![](pic/Prediction_Interactive.png){fig-align="center"}
+
+## [Competing Risk Tables Validation Visualization](https://agstn.github.io/nijman/nijman_tables_flx.html){preview-link="true"}
+
+![](pic/Competing_Risk.png){fig-align="center"}
+
