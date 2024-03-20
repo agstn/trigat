@@ -13,6 +13,7 @@ execute:
 
 format:
    revealjs:
+      embed-resources: true
       # smaller: true
       # scrollable: true
       # c(1080,1920)/1.25
@@ -21,7 +22,6 @@ format:
       code-summary: ''
       height: 864 
       width: 1536
-      embed-resources: true
       controls: true
 ---
 
@@ -332,7 +332,7 @@ Trelliscope is an open source project that provides tools for data scientists to
 #| echo: true
 #| code-fold: true
 #| code-summary: 'R/trelliscope Code'
-#| attr-source: "style='font-size: 0.85em;'"
+#| attr-source: "style='font-size: 0.75em;'"
 
 pacman::p_load(trelliscope)
 
